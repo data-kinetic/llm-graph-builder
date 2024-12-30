@@ -1,6 +1,7 @@
 FROM python:3.10-slim
 WORKDIR /code
 ENV PORT 8000
+ENV WEB_CONCURRENCY 2
 EXPOSE 8000
 # Install dependencies and clean up in one layer
 RUN apt-get update && \
@@ -22,4 +23,4 @@ RUN pip install -r requirements.txt
 # Copy application code
 COPY . /code
 # Set command
-CMD ["gunicorn", "score:app", "--workers", "8","--threads", "8", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "300"]
+CMD ["gunicorn", "score:app", "--workers", "${WEB_CONCURRENCY}", "--threads", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "300"]
