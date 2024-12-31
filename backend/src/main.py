@@ -217,19 +217,19 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
     
 async def extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, fileName, allowedNodes, allowedRelationship, retry_condition):
 
-  logging.info(f'Process file name :{fileName}')
+  logging.info(f'Process file name :{FileName}')
   if not retry_condition:
     gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
     if gcs_file_cache == 'True':
-      folder_name = create_gcs_bucket_folder_name_hashed(uri, fileName)
-      file_name, pages = get_documents_from_gcs( PROJECT_ID, BUCKET_UPLOAD, folder_name, fileName)
+      folder_name = create_gcs_bucket_folder_name_hashed(uri, FileName)
+      file_name, pages = get_documents_from_gcs( PROJECT_ID, BUCKET_UPLOAD, folder_name, FileName)
     else:
-      file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,fileName)
+      file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,FileName)
     if pages==None or len(pages)==0:
       raise Exception(f'File content is not available for file : {file_name}')
     return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship, True, merged_file_path)
   else:
-    return await processing_source(uri, userName, password, database, model, fileName, [], allowedNodes, allowedRelationship, True, merged_file_path, retry_condition)
+    return await processing_source(uri, userName, password, database, model, FileName, [], allowedNodes, allowedRelationship, True, merged_file_path, retry_condition)
   
 async def extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition):
   if not retry_condition:
@@ -611,8 +611,6 @@ def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
   
   file_size = os.path.getsize(merged_file_path)
   return file_size
-  
-
 
 def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname, uri, chunk_dir, merged_dir):
   
@@ -640,7 +638,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
         file_size = merge_chunks_local(originalname, int(total_chunks), chunk_dir, merged_dir)
       
       logging.info("File merged successfully")
-      file_extension = originalname.split('.')[-1]
+      file_extension = originalname.split('.')[-1].lower()
       obj_source_node = sourceNode()
       obj_source_node.file_name = originalname
       obj_source_node.file_type = file_extension
@@ -654,8 +652,16 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
       obj_source_node.entityEntityRelCount=0
       obj_source_node.communityNodeCount=0
       obj_source_node.communityRelCount=0
+
+      # Validate file extension
+      supported_extensions = ['pdf', 'md', 'txt']
+      if file_extension not in supported_extensions:
+          raise HTTPException(
+              status_code=422,
+              detail=f"Unsupported file type: {file_extension}. Supported types are: {', '.join(supported_extensions)}"
+          )
+      
       graphDb_data_Access = graphDBdataAccess(graph)
-        
       graphDb_data_Access.create_source_node(obj_source_node)
       return {'file_size': file_size, 'file_name': originalname, 'file_extension':file_extension, 'message':f"Chunk {chunk_number}/{total_chunks} saved"}
   return f"Chunk {chunk_number}/{total_chunks} saved"
