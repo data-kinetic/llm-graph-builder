@@ -5,6 +5,7 @@ from tempfile import NamedTemporaryFile
 # from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_community.document_loaders import UnstructuredFileLoader
+from langchain_community.document_loaders import TextLoader
 from langchain_core.documents import Document
 
 # def get_documents_from_file_by_bytes(file):
@@ -19,10 +20,13 @@ from langchain_core.documents import Document
 #     return file_name, pages
 
 def load_document_content(file_path):
-    if Path(file_path).suffix.lower() == '.pdf':
+    file_extension = Path(file_path).suffix.lower()
+    if file_extension == '.pdf':
         return PyMuPDFLoader(file_path)
+    elif file_extension == '.md':
+        return TextLoader(file_path, encoding='utf-8')
     else:
-        return UnstructuredFileLoader(file_path, mode="elements",autodetect_encoding=True)
+        return UnstructuredFileLoader(file_path, mode="elements", autodetect_encoding=True)
     
 def get_documents_from_file_by_path(file_path,file_name):
     file_path = Path(file_path)

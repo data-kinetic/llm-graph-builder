@@ -652,8 +652,16 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
       obj_source_node.entityEntityRelCount=0
       obj_source_node.communityNodeCount=0
       obj_source_node.communityRelCount=0
+
+      # Validate file extension
+      supported_extensions = ['pdf', 'md', 'txt']
+      if file_extension not in supported_extensions:
+          raise HTTPException(
+              status_code=422,
+              detail=f"Unsupported file type: {file_extension}. Supported types are: {', '.join(supported_extensions)}"
+          )
+      
       graphDb_data_Access = graphDBdataAccess(graph)
-        
       graphDb_data_Access.create_source_node(obj_source_node)
       return {'file_size': file_size, 'file_name': originalname, 'file_extension':file_extension, 'message':f"Chunk {chunk_number}/{total_chunks} saved"}
   return f"Chunk {chunk_number}/{total_chunks} saved"
